@@ -13,6 +13,10 @@ config_version=4
 config/name="Game Test"
 config/icon="res://icon.png"
 
+[autoload]
+
+Main="*res://Main.gd"
+
 [display]
 
 window/size/width=1920

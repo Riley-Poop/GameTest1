@@ -1,14 +1,29 @@
 extends KinematicBody2D
 
-var speed = 300
+# Speed variables
+var original_speed = 300  # Default speed
+var speed = original_speed  # Current speed
+var boosted_speed = 800  # Boosted speed (for reference, but overridden on pickup)
 var dash_speed = 650
 var dash_duration = 0.2  # Duration in seconds
 var dash_cooldown = 1.0  # Cooldown time between dashes
 var velocity = Vector2()
 
+# Dash and boost states
 var is_dashing = false
 var dash_time_remaining = 0
 var cooldown_time_remaining = 0
+
+func _ready():
+	# Ensure the timer node exists and connect the timeout signal
+	$BoostTimer.connect("timeout", self, "_end_speed_boost")
+
+func start_speed_boost(boost_speed, duration):
+	speed = boost_speed  # Set to boosted speed
+	$BoostTimer.start(duration)  # Start timer for boost duration
+
+func _end_speed_boost():
+	speed = original_speed  # Reset to original speed after the boost ends
 
 func _physics_process(delta):
 	# Handle dash cooldown
