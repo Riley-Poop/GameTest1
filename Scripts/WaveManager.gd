@@ -28,7 +28,7 @@ var homing_enemy_wave = 3  # Wave when homing enemies start appearing
 var shooter_enemy_wave = 5  # Wave when shooter enemies start appearing
 var homing_enemy_chance = 0.3  # 30% chance for homing
 var shooter_enemy_chance = 0.2  # 20% chance for shooter
-var max_shooter_enemies = 2  # Maximum number of shooter enemies allowed at once
+var max_shooter_enemies = 3  # Maximum number of shooter enemies allowed at once
 
 # Node references
 var spawn_timer: Timer
