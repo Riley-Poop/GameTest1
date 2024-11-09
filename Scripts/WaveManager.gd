@@ -1,8 +1,7 @@
-# WaveManager.gd
 extends Node2D
 
 # Wave settings
-var current_wave = 1
+var current_wave = 5
 var base_wave_duration = 20  # Starting wave duration in seconds
 var wave_duration_increase = 10  # How many seconds to add per wave
 var max_wave_duration = 90  # Cap at 1 minute 30 seconds
@@ -24,8 +23,11 @@ var spawn_reduction_per_wave = 0.1  # Reduce spawn time by 0.1 seconds each wave
 # Enemy types and spawning
 var BasicEnemy = preload("res://Scenes/Enemies/BasicEnemy.tscn")
 var HomingEnemy = preload("res://Scenes/Enemies/HomingEnemy.tscn")
+var ShooterEnemy = preload("res://Scenes/Enemies/ShooterEnemy.tscn")
 var homing_enemy_wave = 3  # Wave when homing enemies start appearing
-var homing_enemy_chance = 0.3  # 30% chance to spawn a homing enemy
+var shooter_enemy_wave = 5  # Wave when shooter enemies start appearing
+var homing_enemy_chance = 0.3  # 30% chance for homing
+var shooter_enemy_chance = 0.2  # 20% chance for shooter
 
 # Node references
 var spawn_timer: Timer
@@ -71,13 +73,6 @@ func clear_all_enemies():
 	var enemies = get_tree().get_nodes_in_group("Enemy")
 	for enemy in enemies:
 		enemy.queue_free()
-	
-	# Optional: Add a visual effect for wave clear
-	# show_wave_clear_effect()
-
-func show_wave_clear_effect():
-	# You can add visual effects here like a flash or text animation
-	pass
 
 func start_wave():
 	# Clear any remaining enemies from previous wave
@@ -135,17 +130,23 @@ func update_ui():
 func spawn_enemy():
 	var enemy
 	
-	if current_wave >= homing_enemy_wave and randf() < homing_enemy_chance:
+	# Decide which enemy to spawn based on wave and chances
+	if current_wave >= shooter_enemy_wave and randf() < shooter_enemy_chance:
+		# Spawn shooter enemy
+		enemy = ShooterEnemy.instance()
+		# Set shooter specific properties
+		enemy.speed = 80  # Slower movement
+		enemy.shoot_delay = max(2.0 - (current_wave - shooter_enemy_wave) * 0.2, 0.5)  # Shoots faster in later waves
+		enemy.projectile_speed = 200 + (current_wave - shooter_enemy_wave) * 20  # Faster projectiles in later waves
+		enemy.projectiles_per_burst = 8 + floor((current_wave - shooter_enemy_wave) / 2)  # More projectiles in later waves
+	
+	elif current_wave >= homing_enemy_wave and randf() < homing_enemy_chance:
 		# Spawn homing enemy
 		enemy = HomingEnemy.instance()
-		
-		# Calculate improved properties based on wave
-		var wave_progression = (current_wave - homing_enemy_wave) * 0.1  # 0.0 to 1.0 scale
-		var speed = base_enemy_speed_min * 0.8 + (wave_progression * 100)  # Gradual speed increase
-		var detection = 200 + (wave_progression * 100)  # Gradually increase detection range
-		var turn_strength = min(0.3 + wave_progression * 0.4, 0.7)  # Gradually better turning, capped at 0.7
-		
-		# Set the properties
+		var wave_progression = (current_wave - homing_enemy_wave) * 0.1
+		var speed = base_enemy_speed_min * 0.8 + (wave_progression * 100)
+		var detection = 200 + (wave_progression * 100)
+		var turn_strength = min(0.3 + wave_progression * 0.4, 0.7)
 		enemy.set_movement_properties(speed, detection, turn_strength)
 	else:
 		# Spawn basic enemy
@@ -154,9 +155,6 @@ func spawn_enemy():
 			base_enemy_speed_min + (current_wave - 1) * speed_increase_per_wave,
 			base_enemy_speed_max + (current_wave - 1) * speed_increase_per_wave
 		)
-	
-	# Add enemy to group for easy clearing
-	enemy.add_to_group("Enemy")
 	
 	# Get camera position (center of screen)
 	var camera_center = camera.global_position
