@@ -28,19 +28,23 @@ var homing_enemy_wave = 3  # Wave when homing enemies start appearing
 var shooter_enemy_wave = 5  # Wave when shooter enemies start appearing
 var homing_enemy_chance = 0.3  # 30% chance for homing
 var shooter_enemy_chance = 0.2  # 20% chance for shooter
+var max_shooter_enemies = 2  # Maximum number of shooter enemies allowed at once
 
 # Node references
 var spawn_timer: Timer
 var wave_timer: Timer
 var camera: Camera2D
 var screen_size: Vector2
-var spawn_margin = 100
+var spawn_margin = 50  # Reduced from 100 for closer spawns
 
 # UI references
 onready var wave_label = $CanvasLayer/WaveUI/WaveLabel
 onready var time_label = $CanvasLayer/WaveUI/TimeLabel
 
 func _ready():
+	# Initialize random number generator
+	randomize()
+	
 	# Setup camera
 	camera = get_tree().get_nodes_in_group("Camera")[0]
 	screen_size = get_viewport().get_visible_rect().size
@@ -64,6 +68,14 @@ func setup_timers():
 	wave_timer = Timer.new()
 	wave_timer.connect("timeout", self, "_on_WaveTimer_timeout")
 	add_child(wave_timer)
+
+func count_shooter_enemies():
+	var count = 0
+	var enemies = get_tree().get_nodes_in_group("Enemy")
+	for enemy in enemies:
+		if enemy is preload("res://Scripts/Enemies/ShooterEnemy.gd"):  # Make sure path matches your setup
+			count += 1
+	return count
 
 func clear_all_enemies():
 	# Stop the spawn timer temporarily
@@ -132,16 +144,32 @@ func spawn_enemy():
 	
 	# Decide which enemy to spawn based on wave and chances
 	if current_wave >= shooter_enemy_wave and randf() < shooter_enemy_chance:
-		# Spawn shooter enemy
-		enemy = ShooterEnemy.instance()
-		# Set shooter specific properties
-		enemy.speed = 80  # Slower movement
-		enemy.shoot_delay = max(2.0 - (current_wave - shooter_enemy_wave) * 0.2, 0.5)  # Shoots faster in later waves
-		enemy.projectile_speed = 200 + (current_wave - shooter_enemy_wave) * 20  # Faster projectiles in later waves
-		enemy.projectiles_per_burst = 8 + floor((current_wave - shooter_enemy_wave) / 2)  # More projectiles in later waves
-	
+		# Check if we can spawn a shooter enemy
+		if count_shooter_enemies() < max_shooter_enemies:
+			# Spawn shooter enemy
+			enemy = ShooterEnemy.instance()
+			# Set shooter specific properties
+			enemy.speed = 80  # Slower movement
+			enemy.shoot_delay = max(10.0 - (current_wave - shooter_enemy_wave) * 0.2, 0.5)  # Shoots faster in later waves
+			enemy.projectile_speed = 200 + (current_wave - shooter_enemy_wave) * 20  # Faster projectiles in later waves
+			enemy.projectiles_per_burst = 8 + floor((current_wave - shooter_enemy_wave) / 2)  # More projectiles in later waves
+		else:
+			# If we can't spawn a shooter, try to spawn a homing enemy instead
+			if current_wave >= homing_enemy_wave and randf() < homing_enemy_chance:
+				enemy = HomingEnemy.instance()
+				var wave_progression = (current_wave - homing_enemy_wave) * 0.1
+				var speed = base_enemy_speed_min * 0.8 + (wave_progression * 100)
+				var detection = 200 + (wave_progression * 100)
+				var turn_strength = min(0.3 + wave_progression * 0.4, 0.7)
+				enemy.set_movement_properties(speed, detection, turn_strength)
+			else:
+				# If we can't spawn either special enemy, spawn a basic enemy
+				enemy = BasicEnemy.instance()
+				enemy.speed = rand_range(
+					base_enemy_speed_min + (current_wave - 1) * speed_increase_per_wave,
+					base_enemy_speed_max + (current_wave - 1) * speed_increase_per_wave
+				)
 	elif current_wave >= homing_enemy_wave and randf() < homing_enemy_chance:
-		# Spawn homing enemy
 		enemy = HomingEnemy.instance()
 		var wave_progression = (current_wave - homing_enemy_wave) * 0.1
 		var speed = base_enemy_speed_min * 0.8 + (wave_progression * 100)
@@ -149,7 +177,6 @@ func spawn_enemy():
 		var turn_strength = min(0.3 + wave_progression * 0.4, 0.7)
 		enemy.set_movement_properties(speed, detection, turn_strength)
 	else:
-		# Spawn basic enemy
 		enemy = BasicEnemy.instance()
 		enemy.speed = rand_range(
 			base_enemy_speed_min + (current_wave - 1) * speed_increase_per_wave,
@@ -159,7 +186,8 @@ func spawn_enemy():
 	# Get camera position (center of screen)
 	var camera_center = camera.global_position
 	
-	# Calculate spawn position outside screen view
+	# Calculate spawn position outside screen view with improved randomization
+	randomize()  # Ensure true randomness
 	var spawn_side = randi() % 4
 	var spawn_pos = Vector2()
 	var target_pos = Vector2()
@@ -185,6 +213,12 @@ func spawn_enemy():
 			spawn_pos.y = rand_range(camera_center.y - screen_size.y/2, camera_center.y + screen_size.y/2)
 			target_pos.x = camera_center.x + screen_size.x/2 + spawn_margin
 			target_pos.y = rand_range(camera_center.y - screen_size.y/2, camera_center.y + screen_size.y/2)
+	
+	# Add extra randomization to target position (reduced variation)
+	target_pos += Vector2(
+		rand_range(-screen_size.x/4, screen_size.x/4),
+		rand_range(-screen_size.y/4, screen_size.y/4)
+	)
 	
 	enemy.initialize(spawn_pos, target_pos)
 	add_child(enemy)

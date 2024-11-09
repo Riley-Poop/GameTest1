@@ -10,7 +10,7 @@ var player_scene = "res://Scenes/GameOver.tscn"
 var Projectile = preload("res://Scenes/Enemies/Projectile.tscn")
 var can_shoot = true
 var shoot_timer: Timer
-var shoot_delay = 2.0  # Time between shots
+var shoot_delay = 10.0  # Time between shots
 var projectile_speed = 200
 var projectiles_per_burst = 8  # Number of projectiles in circular pattern
 
