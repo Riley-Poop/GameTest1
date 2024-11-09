@@ -19,7 +19,7 @@ shape = SubResource( 1 )
 
 [node name="ShootTimer" type="Timer" parent="."]
 
-[node name="VisibilityNotifier2D" type="VisibilityNotifier2D" parent="."]
+[node name="VisibilityNotifier2D" type="VisibilityNotifier2D" parent="." groups=["Enemy"]]
 position = Vector2( -0.0714284, 0 )
 scale = Vector2( 1.10714, 1.1 )
 

@@ -17,7 +17,7 @@ texture = ExtResource( 1 )
 position = Vector2( -1, 0 )
 shape = SubResource( 1 )
 
-[node name="VisibilityNotifier2D" type="VisibilityNotifier2D" parent="."]
+[node name="VisibilityNotifier2D" type="VisibilityNotifier2D" parent="." groups=["Enemy"]]
 position = Vector2( -3.8147e-06, -3.8147e-06 )
 scale = Vector2( 11, 11 )
 
