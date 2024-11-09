@@ -35,8 +35,9 @@ var is_invulnerable = false
 var invulnerability_time = 2.0
 var invulnerability_timer = 0.0
 
-# Circle effect node
+# Node references
 onready var attack_circle = $AttackCircle
+onready var attack_indicator = $CooldownIndicator
 
 func _ready():
 	add_to_group("Player")
@@ -55,6 +56,10 @@ func _ready():
 	attack_circle.scale = Vector2(circle_scale, circle_scale)
 	attack_circle.visible = false
 
+	# Set initial attack indicator state
+	if attack_indicator:
+		attack_indicator.visible = true
+
 func _physics_process(delta):
 	# Handle invulnerability timer
 	if is_invulnerable:
@@ -62,14 +67,18 @@ func _physics_process(delta):
 		if invulnerability_timer <= 0:
 			is_invulnerable = false
 	
-	# Handle attack cooldown
+	# Handle attack cooldown and indicator
 	if attack_cooldown_remaining > 0:
 		attack_cooldown_remaining -= delta
 		if attack_cooldown_remaining <= 0:
 			can_attack = true
+			if attack_indicator:
+				attack_indicator.visible = true
 	
 	# Check for attack input
 	if Input.is_action_just_pressed("attack") and can_attack:
+		if attack_indicator:
+			attack_indicator.visible = false
 		perform_attack()
 	
 	# Handle speed boost timer
@@ -116,6 +125,8 @@ func _physics_process(delta):
 func perform_attack():
 	can_attack = false
 	attack_cooldown_remaining = attack_cooldown
+	if attack_indicator:
+		attack_indicator.visible = false
 	
 	# Show attack effect
 	show_attack_effect()
