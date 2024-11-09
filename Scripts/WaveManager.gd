@@ -1,7 +1,7 @@
 extends Node2D
 
 # Wave settings
-var current_wave = 5
+var current_wave = 1
 var base_wave_duration = 20  # Starting wave duration in seconds
 var wave_duration_increase = 10  # How many seconds to add per wave
 var max_wave_duration = 90  # Cap at 1 minute 30 seconds
