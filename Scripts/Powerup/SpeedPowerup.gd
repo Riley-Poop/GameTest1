@@ -4,7 +4,7 @@ extends Area2D
 signal collected
 
 var lifetime = 5.0  # How long the power-up stays on screen
-var speed_boost = 200  # How much extra speed to give
+var speed_boost = 400  # How much extra speed to give
 var boost_duration = 3.0  # How long the speed boost lasts
 var despawn_timer: Timer
 

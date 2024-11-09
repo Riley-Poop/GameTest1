@@ -35,7 +35,7 @@ var spawn_timer: Timer
 var wave_timer: Timer
 var camera: Camera2D
 var screen_size: Vector2
-var spawn_margin = 50  # Reduced from 100 for closer spawns
+var spawn_margin = 50
 
 # UI references
 onready var wave_label = $CanvasLayer/WaveUI/WaveLabel
@@ -73,7 +73,7 @@ func count_shooter_enemies():
 	var count = 0
 	var enemies = get_tree().get_nodes_in_group("Enemy")
 	for enemy in enemies:
-		if enemy is preload("res://Scripts/Enemies/ShooterEnemy.gd"):  # Make sure path matches your setup
+		if enemy is preload("res://Scripts/Enemies/BasicEnemy.gd"):  # Make sure path matches your setup
 			count += 1
 	return count
 
@@ -150,7 +150,7 @@ func spawn_enemy():
 			enemy = ShooterEnemy.instance()
 			# Set shooter specific properties
 			enemy.speed = 80  # Slower movement
-			enemy.shoot_delay = max(10.0 - (current_wave - shooter_enemy_wave) * 0.2, 0.5)  # Shoots faster in later waves
+			enemy.shoot_delay = max(2.0 - (current_wave - shooter_enemy_wave) * 0.2, 0.5)  # Shoots faster in later waves
 			enemy.projectile_speed = 200 + (current_wave - shooter_enemy_wave) * 20  # Faster projectiles in later waves
 			enemy.projectiles_per_burst = 8 + floor((current_wave - shooter_enemy_wave) / 2)  # More projectiles in later waves
 		else:
@@ -214,7 +214,7 @@ func spawn_enemy():
 			target_pos.x = camera_center.x + screen_size.x/2 + spawn_margin
 			target_pos.y = rand_range(camera_center.y - screen_size.y/2, camera_center.y + screen_size.y/2)
 	
-	# Add extra randomization to target position (reduced variation)
+	# Add extra randomization to target position
 	target_pos += Vector2(
 		rand_range(-screen_size.x/4, screen_size.x/4),
 		rand_range(-screen_size.y/4, screen_size.y/4)
@@ -222,3 +222,19 @@ func spawn_enemy():
 	
 	enemy.initialize(spawn_pos, target_pos)
 	add_child(enemy)
+
+# Upgrade Functions
+func reduce_enemy_spawns():
+	# Increase spawn times by 20%
+	base_spawn_time_min *= 1.2
+	base_spawn_time_max *= 1.2
+	# Update current spawn times
+	min_spawn_time = max(base_spawn_time_min - (current_wave - 1) * spawn_reduction_per_wave, 0.4)
+	max_spawn_time = max(base_spawn_time_max - (current_wave - 1) * spawn_reduction_per_wave, 0.8)
+
+func reduce_wave_time():
+	# Reduce current and remaining wave time by 10%
+	current_wave_duration *= 0.9
+	time_remaining *= 0.9
+	# Also reduce base duration for future waves
+	base_wave_duration *= 0.9

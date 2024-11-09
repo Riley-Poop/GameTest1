@@ -1,0 +1,28 @@
+[gd_scene load_steps=5 format=2]
+
+[ext_resource path="res://Scripts/CoinManager.gd" type="Script" id=1]
+[ext_resource path="res://Extra/Fonts/Halo Dek.ttf" type="DynamicFontData" id=2]
+[ext_resource path="res://Scenes/UI/UpgradeUI.tscn" type="PackedScene" id=3]
+
+[sub_resource type="DynamicFont" id=1]
+size = 73
+outline_size = 5
+outline_color = Color( 0, 0, 0, 1 )
+font_data = ExtResource( 2 )
+
+[node name="CoinManager" type="Node2D"]
+script = ExtResource( 1 )
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="CoinLabel" type="Label" parent="CanvasLayer"]
+margin_left = 1686.0
+margin_top = 43.0
+margin_right = 1821.0
+margin_bottom = 118.0
+custom_fonts/font = SubResource( 1 )
+text = "0/10"
+align = 2
+valign = 1
+
+[node name="UpgradeUI" parent="CanvasLayer" instance=ExtResource( 3 )]

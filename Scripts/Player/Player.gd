@@ -22,14 +22,20 @@ var speed_boost_timer = 0.0
 var has_speed_boost = false
 
 # Attack variables
+var base_attack_cooldown = 20.0  # Store base value for reference
 var attack_cooldown = 20.0
 var attack_cooldown_remaining = 0.0
+var base_attack_radius = 200  # Store base value for reference
 var attack_radius = 200
 var can_attack = true
 
-# Nodes
+# Upgrade variables
+var has_shield = false
+var slow_field_strength = 0  # This will stack with upgrades
+var slow_field_radius = 200  # Radius for slowing effect
+
+# Circle effect node
 onready var attack_circle = $AttackCircle
-onready var attack_indicator = $CooldownIndicator  # Your existing sprite node
 
 func _ready():
 	add_to_group("Player")
@@ -47,9 +53,6 @@ func _ready():
 	var circle_scale = (attack_radius * 2.0) / attack_circle.texture.get_width()
 	attack_circle.scale = Vector2(circle_scale, circle_scale)
 	attack_circle.visible = false
-	
-	# Make sure attack indicator is showing at start since attack is ready
-	attack_indicator.visible = true
 
 func _physics_process(delta):
 	# Handle attack cooldown
@@ -57,8 +60,10 @@ func _physics_process(delta):
 		attack_cooldown_remaining -= delta
 		if attack_cooldown_remaining <= 0:
 			can_attack = true
-			# Show indicator when attack is ready again
-			attack_indicator.visible = true
+	
+	# Apply slow field effect to nearby enemies
+	if slow_field_strength > 0:
+		apply_slow_field()
 	
 	# Check for attack input
 	if Input.is_action_just_pressed("attack") and can_attack:
@@ -105,11 +110,21 @@ func _physics_process(delta):
 		
 		velocity = move_and_slide(velocity)
 
+func apply_slow_field():
+	var enemies = get_tree().get_nodes_in_group("Enemy")
+	for enemy in enemies:
+		var distance = global_position.distance_to(enemy.global_position)
+		if distance < slow_field_radius:
+			# Calculate slow effect based on distance (stronger when closer)
+			var slow_multiplier = 1.0 - (slow_field_strength * (1 - distance/slow_field_radius))
+			# Ensure enemies don't completely stop
+			slow_multiplier = max(slow_multiplier, 0.2)
+			# Apply slow effect
+			enemy.apply_speed_multiplier(slow_multiplier)
+
 func perform_attack():
 	can_attack = false
 	attack_cooldown_remaining = attack_cooldown
-	# Hide indicator when attack is used
-	attack_indicator.visible = false
 	
 	# Show attack effect
 	show_attack_effect()
@@ -145,6 +160,30 @@ func show_attack_effect():
 	yield(tween, "tween_completed")
 	attack_circle.visible = false
 	tween.queue_free()
+
+# Upgrade functions
+func upgrade_attack_cooldown():
+	attack_cooldown = max(2.0, attack_cooldown - 2.0)  # Minimum 2 second cooldown
+
+func upgrade_slow_field():
+	slow_field_strength += 0.2  # 20% slower per upgrade
+
+func add_shield():
+	has_shield = true
+
+func upgrade_attack_radius():
+	attack_radius += 50
+	# Update attack circle size
+	var circle_scale = (attack_radius * 2.0) / attack_circle.texture.get_width()
+	attack_circle.scale = Vector2(circle_scale, circle_scale)
+
+func take_damage():
+	if has_shield:
+		has_shield = false
+		return false  # Didn't actually take damage
+	else:
+		get_tree().change_scene("res://Scenes/GameOver.tscn")
+		return true  # Did take damage
 
 func start_dash():
 	is_dashing = true
