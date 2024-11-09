@@ -5,6 +5,7 @@ extends Area2D
 var speed = 80  # Slower than basic enemy
 var direction = Vector2.ZERO
 var player_scene = "res://Scenes/GameOver.tscn"
+var speed_multiplier = 1.0  # Add speed multiplier
 
 # Shooting
 var Projectile = preload("res://Scenes/Enemies/Projectile.tscn")
@@ -16,6 +17,7 @@ var projectiles_per_burst = 8  # Number of projectiles in circular pattern
 
 func _ready():
 	add_to_group("Enemy")
+	add_to_group("ShooterEnemy")
 	# Connect the body entered signal for player collision
 	connect("body_entered", self, "_on_Enemy_body_entered")
 	
@@ -27,7 +29,7 @@ func _ready():
 	shoot_timer.start()
 
 func _physics_process(delta):
-	position += direction * speed * delta
+	position += direction * speed * speed_multiplier * delta  # Apply speed multiplier
 
 func initialize(spawn_pos, target_pos):
 	position = spawn_pos
@@ -47,13 +49,16 @@ func shoot():
 		projectile.initialize(position, projectile_direction)
 		get_tree().get_root().add_child(projectile)
 
+func apply_speed_multiplier(multiplier):
+	speed_multiplier = multiplier
+
 func _on_ShootTimer_timeout():
 	shoot()
 
-# This is the function that kills the player on contact
 func _on_Enemy_body_entered(body):
 	if body.is_in_group("Player"):
-		get_tree().change_scene(player_scene)
+		if body.has_method("take_damage"):
+			body.take_damage()
 
 func _on_VisibilityNotifier2D_screen_exited():
 	queue_free()

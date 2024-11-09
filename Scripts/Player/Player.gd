@@ -31,8 +31,9 @@ var can_attack = true
 
 # Upgrade variables
 var has_shield = false
-var slow_field_strength = 0  # This will stack with upgrades
-var slow_field_radius = 200  # Radius for slowing effect
+var is_invulnerable = false
+var invulnerability_time = 2.0
+var invulnerability_timer = 0.0
 
 # Circle effect node
 onready var attack_circle = $AttackCircle
@@ -55,15 +56,17 @@ func _ready():
 	attack_circle.visible = false
 
 func _physics_process(delta):
+	# Handle invulnerability timer
+	if is_invulnerable:
+		invulnerability_timer -= delta
+		if invulnerability_timer <= 0:
+			is_invulnerable = false
+	
 	# Handle attack cooldown
 	if attack_cooldown_remaining > 0:
 		attack_cooldown_remaining -= delta
 		if attack_cooldown_remaining <= 0:
 			can_attack = true
-	
-	# Apply slow field effect to nearby enemies
-	if slow_field_strength > 0:
-		apply_slow_field()
 	
 	# Check for attack input
 	if Input.is_action_just_pressed("attack") and can_attack:
@@ -110,18 +113,6 @@ func _physics_process(delta):
 		
 		velocity = move_and_slide(velocity)
 
-func apply_slow_field():
-	var enemies = get_tree().get_nodes_in_group("Enemy")
-	for enemy in enemies:
-		var distance = global_position.distance_to(enemy.global_position)
-		if distance < slow_field_radius:
-			# Calculate slow effect based on distance (stronger when closer)
-			var slow_multiplier = 1.0 - (slow_field_strength * (1 - distance/slow_field_radius))
-			# Ensure enemies don't completely stop
-			slow_multiplier = max(slow_multiplier, 0.2)
-			# Apply slow effect
-			enemy.apply_speed_multiplier(slow_multiplier)
-
 func perform_attack():
 	can_attack = false
 	attack_cooldown_remaining = attack_cooldown
@@ -165,9 +156,6 @@ func show_attack_effect():
 func upgrade_attack_cooldown():
 	attack_cooldown = max(2.0, attack_cooldown - 2.0)  # Minimum 2 second cooldown
 
-func upgrade_slow_field():
-	slow_field_strength += 0.2  # 20% slower per upgrade
-
 func add_shield():
 	has_shield = true
 
@@ -178,12 +166,17 @@ func upgrade_attack_radius():
 	attack_circle.scale = Vector2(circle_scale, circle_scale)
 
 func take_damage():
+	if is_invulnerable:
+		return false
+		
 	if has_shield:
 		has_shield = false
-		return false  # Didn't actually take damage
+		is_invulnerable = true
+		invulnerability_timer = invulnerability_time
+		return false
 	else:
 		get_tree().change_scene("res://Scenes/GameOver.tscn")
-		return true  # Did take damage
+		return true
 
 func start_dash():
 	is_dashing = true
@@ -196,3 +189,12 @@ func apply_speed_boost(boost_amount, duration):
 	max_speed = base_speed + boost_amount
 	dash_speed = base_dash_speed * 2
 	speed_boost_timer = duration
+
+# Visual feedback for shield and invulnerability
+func _process(_delta):
+	if has_shield:
+		modulate = Color(0.5, 1, 0.5)  # Green tint for shield
+	elif is_invulnerable:
+		modulate = Color(1, 1, 1, 0.5)  # Flashing effect for invulnerability
+	else:
+		modulate = Color(1, 1, 1, 1)  # Normal color

@@ -9,12 +9,6 @@ var upgrades = [
 		"rarity": "common"
 	},
 	{
-		"name": "Slow Field",
-		"description": "Slow down nearby enemies",
-		"type": "slowfield",
-		"rarity": "common"
-	},
-	{
 		"name": "Less Enemies",
 		"description": "Reduce enemy spawn rate",
 		"type": "less_enemies",
@@ -85,8 +79,6 @@ func apply_upgrade(index):
 	match upgrade.type:
 		"cooldown":
 			player.upgrade_attack_cooldown()
-		"slowfield":
-			player.upgrade_slow_field()
 		"less_enemies":
 			wave_manager.reduce_enemy_spawns()
 		"shield":
@@ -96,6 +88,5 @@ func apply_upgrade(index):
 		"bigger_attack":
 			player.upgrade_attack_radius()
 	
-	# Hide the upgrade UI and unpause the game
 	hide()
 	get_tree().paused = false

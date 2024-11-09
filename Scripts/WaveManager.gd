@@ -150,7 +150,7 @@ func spawn_enemy():
 			enemy = ShooterEnemy.instance()
 			# Set shooter specific properties
 			enemy.speed = 80  # Slower movement
-			enemy.shoot_delay = max(2.0 - (current_wave - shooter_enemy_wave) * 0.2, 0.5)  # Shoots faster in later waves
+			enemy.shoot_delay = max(10.0 - (current_wave - shooter_enemy_wave) * 0.2, 0.5)  # Shoots faster in later waves
 			enemy.projectile_speed = 200 + (current_wave - shooter_enemy_wave) * 20  # Faster projectiles in later waves
 			enemy.projectiles_per_burst = 8 + floor((current_wave - shooter_enemy_wave) / 2)  # More projectiles in later waves
 		else:
